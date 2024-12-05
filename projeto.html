@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-commerce Básico</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Meu E-commerce</h1>
+        <nav>
+            <a href="#" id="login-link">Login</a>
+            <a href="#" id="register-link">Cadastro</a>
+            <a href="#" id="cart-link">Carrinho (<span id="cart-count">0</span>)</a>
+        </nav>
+    </header>
+
+    <main>
+        <div id="product-list" class="hidden"></div>
+        <div id="cart" class="hidden"></div>
+        <div id="register" class="hidden">
+            <h2>Cadastrar</h2>
+            <form id="register-form">
+                <input type="text" id="reg-username" placeholder="Usuário" required>
+                <input type="password" id="reg-password" placeholder="Senha" required>
+                <button type="submit">Cadastrar</button>
+            </form>
+        </div>
+        <div id="login" class="hidden">
+            <h2>Login</h2>
+            <form id="login-form">
+                <input type="text" id="username" placeholder="Usuário" required>
+                <input type="password" id="password" placeholder="Senha" required>
+                <button type="submit">Entrar</button>
+            </form>
+        </div>
+    </main>
+
+    <script >
+    const apiUrl = 'https://fakestoreapi.com/products';
+        let cart = [];
+        let users = [];
+        
+        // Função para carregar produtos da API
+        async function fetchProducts() {
+            const response = await fetch(apiUrl);
+            const products = await response.json();
+            displayProducts(products);
+        }
+        
+        // Exibir produtos na tela
+        function displayProducts(products) {
+            const productList = document.getElementById('product-list');
+            productList.innerHTML = '';
+            products.forEach(product => {
+                const div = document.createElement('div');
+                div.className = 'product-item';
+                div.innerHTML = `
+                    <h3>${product.title}</h3>
+                    <p>Preço: R$ ${product.price.toFixed(2)}</p>
+                    <button onclick="addToCart(${product.id}, '${product.title}', ${product.price})">Adicionar ao Carrinho</button>
+                `;
+                productList.appendChild(div);
+            });
+            productList.classList.remove('hidden');
+        }
+        
+        // Adicionar produtos ao carrinho
+        function addToCart(id, title, price) {
+            const item = cart.find(item => item.id === id);
+            if (item) {
+                item.quantity++;
+            } else {
+                cart.push({ id, title, price, quantity: 1 });
+            }
+            updateCartCount();
+        }
+        
+        // Atualizar contagem de itens no carrinho
+        function updateCartCount() {
+            const cartCount = document.getElementById('cart-count');
+            cartCount.innerText = cart.reduce((total, item) => total + item.quantity, 0);
+        }
+        
+        // Função de cadastro
+        document.getElementById('register-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const username = document.getElementById('reg-username').value;
+            const password = document.getElementById('reg-password').value;
+            users.push({ username, password });
+            alert('Usuário cadastrado com sucesso!');
+            toggleForms('login');
+        });
+        
+        // Função de login
+        document.getElementById('login-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const user = users.find(u => u.username === username && u.password === password);
+            if (user) {
+                alert('Login bem-sucedido!');
+                document.getElementById('product-list').classList.remove('hidden');
+                document.getElementById('login').classList.add('hidden');
+                fetchProducts();
+            } else {
+                alert('Usuário ou senha inválidos.');
+            }
+        });
+        
+        // Alternar entre formularios
+        function toggleForms(form) {
+            document.getElementById('register').classList.add('hidden');
+            document.getElementById('login').classList.add('hidden');
+            document.getElementById('product-list').classList.add('hidden');
+            if (form === 'register') {
+                document.getElementById('register').classList.remove('hidden');
+            } else if (form === 'login') {
+                document.getElementById('login').classList.remove('hidden');
+            }
+        }
+        
+        // Configurar eventos de clique nos links
+        document.getElementById('register-link').onclick = () => toggleForms('register');
+        document.getElementById('login-link').onclick = () => toggleForms('login');
+        document.getElementById('cart-link').onclick = () => {
+            const cartContainer = document.getElementById('cart');
+            cartContainer.innerHTML = '';
+            cart.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'cart-item';
+                div.innerHTML = `${item.title} - R$ ${item.price.toFixed(2)} x ${item.quantity}`;
+                cartContainer.appendChild(div);
+            });
+            cartContainer.classList.remove('hidden');
+        };
+        
+        // Carregar produtos ao iniciar
+        fetchProducts();
+    </script>
+</body>
+</html>
